@@ -4,19 +4,23 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 
 public class MainActivity extends ActionBarActivity implements View.OnClickListener, ServiceConnection {
 
     private EditText etData;
     private MyService.Binder binder;
+    private TextView tvOut;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +28,7 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         etData = (EditText) findViewById(R.id.et_data);
+        tvOut = (TextView) findViewById(R.id.tv_out);
 
         findViewById(R.id.btn_startService).setOnClickListener(this);
         findViewById(R.id.btn_stopService).setOnClickListener(this);
@@ -82,10 +87,30 @@ public class MainActivity extends ActionBarActivity implements View.OnClickListe
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         binder = (MyService.Binder) service;
+        binder.getService().setCallback(new MyService.Callback() {
+            @Override
+            public void onDataChange(String data) {
+                //tvOut.setText(data);// 线程安全不允许
+                Message msg = new Message();
+                Bundle b = new Bundle();
+                b.putString("data", data);
+                msg.setData(b);
+                handler.sendMessage(msg);
+            }
+        });
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
 
     }
+
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+
+            tvOut.setText(msg.getData().getString("data"));
+        }
+    };
 }

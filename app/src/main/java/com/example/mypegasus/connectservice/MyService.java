@@ -2,7 +2,6 @@ package com.example.mypegasus.connectservice;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
 
 public class MyService extends Service {
@@ -24,6 +23,10 @@ public class MyService extends Service {
         public void setData(String data) {
             MyService.this.data = data;
         }
+
+        public MyService getService() {
+            return MyService.this;
+        }
     }
 
     @Override
@@ -43,8 +46,15 @@ public class MyService extends Service {
             public void run() {
                 super.run();
 
+                int i = 0;
                 while (running) {
-                    System.out.println(data);
+                    i++;
+                    String str = i + ":" + data;
+                    System.out.println(str);
+
+                    if(callback != null) {
+                        callback.onDataChange(str);
+                    }
                     try {
                         sleep(1000);
                     } catch (InterruptedException e) {
@@ -60,5 +70,19 @@ public class MyService extends Service {
         super.onDestroy();
 
         running = false;
+    }
+
+    private Callback callback;
+
+    public Callback getCallback() {
+        return callback;
+    }
+
+    public void setCallback(Callback callback) {
+        this.callback = callback;
+    }
+
+    public interface Callback{
+        void onDataChange(String data);
     }
 }
